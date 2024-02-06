@@ -1,35 +1,65 @@
-// 1. require express framework
+"use strict";
+// require express
 const express = require("express");
-// 2. invoke express
+// invoke express
 const app = express();
+// require dotenv
+require("dotenv").config();
+// require axios
+const axios = require("axios");
 // require cors
 const cors = require("cors");
-const port = 3000;
-// after the decleration of the app
 app.use(cors());
-const movieData = require("./Movie Data/data.json");
-//  Routing
-// path - rout - endpoint - URI: Uniform Resource Identifier
-//  app.METHOD(PATH, HANDLER)
-//
+// port
+const port = process.env.PORT; // sensitive data
+// API KEYS
+const apiKey = process.env.API_KEY; // sensitive data
+const apiKey2 = process.env.API_KEY2; // sensitive data
+// =-=-=-=-=-
+
 // Routs
-app.get("/favorite", favoriteRouteHandler);
-app.get("/", homePageHandler); // Home
-app.get("*", handle404Error);
-//
-// Handlers
-// http://localhost:3000/favorite
-function favoriteRouteHandler(req, res) {
-  res.send("Welcome to Favorite Page");
+app.get("/trending", trendingHandler);
+app.get("/search", searchHandler);
+// =-=-=-=-=-
+// Handler Functions
+
+function trendingHandler(req, res) {
+  let url = `https://api.themoviedb.org/3/trending/all/week?api_key=${apiKey}&language=en-US`;
+  axios
+    .get(url)
+    .then((result) => {
+      console.log(result.data.results);
+      //
+      let movieData = result.data.results.map(function (ele) {
+        return new Movie(
+          ele.id,
+          ele.title,
+          ele.release_date,
+          ele.poster_path,
+          ele.overview
+        );
+      });
+      res.json(movieData);
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).send("Internal Server Error");
+    });
 }
-// http://localhost:3000/
-function homePageHandler(req, res) {
-  let result = new Movie(
-    movieData.title,
-    movieData.poster_path,
-    movieData.overview
-  );
-  res.json(result);
+//
+function searchHandler(req, res) {
+  let movieName = req.query.name;
+  let url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey2}&language=en-US&query=${movieName}`;
+  axios
+    .get(url)
+    .then((result) => {
+      let response = result.data.results;
+      res.json(response);
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).send("Internal Server Error");
+    });
 }
 // Handle 404 Error: Use middle ware
 app.use((req, res, next) => {
@@ -41,9 +71,11 @@ app.use((err, req, res, next) => {
   res.status(500).send("Internal Server Error");
 });
 // Building the Constructor
-function Movie(title, posterPath, overview) {
-  (this.title = title),
-    (this.poster_path = posterPath),
+function Movie(id, title, releaseDate, posterPath, overview) {
+  (this.id = id),
+    (this.title = title),
+    (this.releaseDate = releaseDate),
+    (this.posterPath = posterPath),
     (this.overview = overview);
 }
 //
