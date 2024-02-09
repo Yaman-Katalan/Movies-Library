@@ -5,6 +5,10 @@ const express = require("express");
 const app = express();
 // require dotenv
 require("dotenv").config();
+// require body-parser
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 // require axios
 const axios = require("axios");
 // require cors
@@ -12,55 +16,47 @@ const cors = require("cors");
 app.use(cors());
 // port
 const port = process.env.PORT; // sensitive data
-// API KEYS
-const apiKey = process.env.API_KEY; // sensitive data
-const apiKey2 = process.env.API_KEY2; // sensitive data
 // =-=-=-=-=-
+const { Client } = require("pg"); //????
+// import { Client } from "pg";
+const url = `postgres://yaman:0000@localhost:5432/lab13`;
+const client = new Client(url); //????
 
-// Routs
-app.get("/trending", trendingHandler);
-app.get("/search", searchHandler);
 // =-=-=-=-=-
-// Handler Functions
-
-function trendingHandler(req, res) {
-  let url = `https://api.themoviedb.org/3/trending/all/week?api_key=${apiKey}&language=en-US`;
-  axios
-    .get(url)
-    .then((result) => {
-      console.log(result.data.results);
-      //
-      let movieData = result.data.results.map(function (ele) {
-        return new Movie(
-          ele.id,
-          ele.title,
-          ele.release_date,
-          ele.poster_path,
-          ele.overview
-        );
-      });
-      res.json(movieData);
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).send("Internal Server Error");
-    });
+// routs
+app.get("/", homeHandler); // endpoint
+app.post("/addMovie", addMovieHandler); // endpoint
+app.get("/getMovies", getMoviesHandler); // endpoint
+// functions
+function homeHandler(req, res) {
+  res.send("Welcome Home!");
 }
-//
-function searchHandler(req, res) {
-  let movieName = req.query.name;
-  let url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey2}&language=en-US&query=${movieName}`;
-  axios
-    .get(url)
+function addMovieHandler(req, res) {
+  console.log(req.body);
+  //
+  const { id, title, releaseDate, posterPath, overview, comments } = req.body; // destructuring ES6 features
+  const sql = `INSERT INTO movie (id, title, releaseDate, posterPath, overview, comments)
+  VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`; // $: encoded data: security: sql injection. hacking technique.
+  const values = [id, title, releaseDate, posterPath, overview, comments];
+  client
+    .query(sql, values)
     .then((result) => {
-      let response = result.data.results;
-      res.json(response);
+      console.log(result.rows);
+      res.status(201).json(result.rows);
     })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).send("Internal Server Error");
-    });
+    .catch();
 }
+function getMoviesHandler(req, res) {
+  const sql = `SELECT * FROM movie;`;
+  client
+    .query(sql)
+    .then((result) => {
+      const data = result.rows;
+      res.json(data);
+    })
+    .catch();
+}
+// =-=-=-=-=-=-
 // Handle 404 Error: Use middle ware
 app.use((req, res, next) => {
   res.status(404).send("404 Not Found");
@@ -70,16 +66,14 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send("Internal Server Error");
 });
-// Building the Constructor
-function Movie(id, title, releaseDate, posterPath, overview) {
-  (this.id = id),
-    (this.title = title),
-    (this.releaseDate = releaseDate),
-    (this.posterPath = posterPath),
-    (this.overview = overview);
-}
+// Listen
 //
-// 3. run server make it listening on port
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
+client
+  .connect()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`listening on port ${port}`);
+    });
+  })
+  .catch();
+//
