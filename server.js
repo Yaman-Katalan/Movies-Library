@@ -27,6 +27,8 @@ const client = new Client(url); //????
 app.get("/", homeHandler); // endpoint
 app.post("/addMovie", addMovieHandler); // endpoint
 app.get("/getMovies", getMoviesHandler); // endpoint
+app.put("/editMovie/:id", editMovieHandler); // endpoint
+app.delete("/deleteMovie/:id", deleteMovieHandler); // endpoint
 // functions
 function homeHandler(req, res) {
   res.send("Welcome Home!");
@@ -34,10 +36,10 @@ function homeHandler(req, res) {
 function addMovieHandler(req, res) {
   console.log(req.body);
   //
-  const { id, title, releaseDate, posterPath, overview, comments } = req.body; // destructuring ES6 features
-  const sql = `INSERT INTO movie (id, title, releaseDate, posterPath, overview, comments)
+  const { title, releaseDate, posterPath, overview, comments } = req.body; // destructuring ES6 features
+  const sql = `INSERT INTO movie (title, releaseDate, posterPath, overview, comments)
   VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`; // $: encoded data: security: sql injection. hacking technique.
-  const values = [id, title, releaseDate, posterPath, overview, comments];
+  const values = [title, releaseDate, posterPath, overview, comments];
   client
     .query(sql, values)
     .then((result) => {
@@ -53,6 +55,34 @@ function getMoviesHandler(req, res) {
     .then((result) => {
       const data = result.rows;
       res.json(data);
+    })
+    .catch();
+}
+function editMovieHandler(req, res) {
+  console.log(req.params);
+  let movieId = req.params.id;
+  console.log(req.body);
+  let { title, releaseDate, posterPath, overview, comments } = req.body;
+  let sql = `UPDATE movie
+  SET title = $1, releaseDate = $2, posterPath = $3, overview = $4, comments = $5
+  WHERE id = $6;`;
+  let values = [title, releaseDate, posterPath, overview, comments, movieId];
+  client
+    .query(sql, values)
+    .then((result) => {
+      res.send("successfully updated");
+    })
+    .catch();
+}
+function deleteMovieHandler(req, res) {
+  console.log(req.params);
+  let { id } = req.params;
+  let sql = `DELETE FROM movie WHERE id = $1;`;
+  let values = [id];
+  client
+    .query(sql, values)
+    .then((result) => {
+      res.status(204).send("successfully deleted");
     })
     .catch();
 }
