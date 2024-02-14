@@ -20,7 +20,7 @@ const port = process.env.PORT; // sensitive data
 const { Client } = require("pg"); //????
 // import { Client } from "pg";
 // const url = `postgres://yaman:0000@localhost:5432/lab13`;
-const url = `postgres://trimdzbd:oXtFAYjSvtJojL4xQWz_Y7OHdjbgaqlT@lallah.db.elephantsql.com/trimdzbd`;
+const url = process.env.DB_URL;
 const client = new Client(url); //????
 
 // =-=-=-=-=-
