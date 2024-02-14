@@ -27,6 +27,7 @@ const client = new Client(url); //????
 app.get("/", homeHandler); // endpoint
 app.post("/addMovie", addMovieHandler); // endpoint
 app.get("/getMovies", getMoviesHandler); // endpoint
+app.get("/getMovie/:id", getMovieHandler); // endpoint
 app.put("/editMovie/:id", editMovieHandler); // endpoint
 app.delete("/deleteMovie/:id", deleteMovieHandler); // endpoint
 // functions
@@ -38,7 +39,7 @@ function addMovieHandler(req, res) {
   //
   const { title, releaseDate, posterPath, overview, comments } = req.body; // destructuring ES6 features
   const sql = `INSERT INTO movie (title, releaseDate, posterPath, overview, comments)
-  VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`; // $: encoded data: security: sql injection. hacking technique.
+  VALUES ($1, $2, $3, $4, $5) RETURNING *`; // $: encoded data: security: sql injection. hacking technique.
   const values = [title, releaseDate, posterPath, overview, comments];
   client
     .query(sql, values)
@@ -55,6 +56,16 @@ function getMoviesHandler(req, res) {
     .then((result) => {
       const data = result.rows;
       res.json(data);
+    })
+    .catch();
+}
+function getMovieHandler(req, res) {
+  const id = req.params.id;
+  const sql = `SELECT * FROM movie WHERE id = $1`;
+  client
+    .query(sql, [id])
+    .then((result) => {
+      res.status(200).json(result.rows);
     })
     .catch();
 }
