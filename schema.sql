@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS movie;
 CREATE TABLE movie (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255),
@@ -5,4 +6,4 @@ CREATE TABLE movie (
     posterPath VARCHAR(255),
     overview VARCHAR(255),
     comments VARCHAR(255)
-)
+);

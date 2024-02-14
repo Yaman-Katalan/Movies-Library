@@ -19,7 +19,8 @@ const port = process.env.PORT; // sensitive data
 // =-=-=-=-=-
 const { Client } = require("pg"); //????
 // import { Client } from "pg";
-const url = `postgres://yaman:0000@localhost:5432/lab13`;
+// const url = `postgres://yaman:0000@localhost:5432/lab13`;
+const url = `postgres://trimdzbd:oXtFAYjSvtJojL4xQWz_Y7OHdjbgaqlT@lallah.db.elephantsql.com/trimdzbd`;
 const client = new Client(url); //????
 
 // =-=-=-=-=-
@@ -38,7 +39,7 @@ function addMovieHandler(req, res) {
   //
   const { title, releaseDate, posterPath, overview, comments } = req.body; // destructuring ES6 features
   const sql = `INSERT INTO movie (title, releaseDate, posterPath, overview, comments)
-  VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`; // $: encoded data: security: sql injection. hacking technique.
+  VALUES ($1, $2, $3, $4, $5) RETURNING *`; // $: encoded data: security: sql injection. hacking technique.
   const values = [title, releaseDate, posterPath, overview, comments];
   client
     .query(sql, values)
